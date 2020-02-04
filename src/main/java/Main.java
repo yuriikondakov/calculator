@@ -1,50 +1,63 @@
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    private static final List<Character> operations = Arrays.asList('+', '-', '*', '/', '(', ')');
 
     public static void main(String[] args) {
+        String line = getStringFromConsole();
+        Deque<String> numbersAndOperations = parseStringToNumbersAndOperations(line);
+        System.out.println(numbersAndOperations);
+       // System.out.println(Calc.getResult(numbersAndOperations));
+    }
+
+    private static String getStringFromConsole() {
         Scanner scanner = new Scanner(System.in);
         String line;
         do {
+            System.out.println("Enter string that consist of digits, signs + - * / and parentheses");
             line = scanner.nextLine();
         } while (!isValid(line));
-
-        System.out.println(Calc.getResult(parseDigitsToNumbers(line)));
+        return line;
     }
 
-    static boolean isValid(String input) {
-        String regex = "^[\\d\\+\\/\\*\\.\\- \\(\\)]*$";
-        boolean isValid = input.matches(regex);
+    private static boolean isValid(String line) {
+        String regex = "^[\\d+/*.\\- ()]*$";
+        boolean isValid = line.matches(regex);
         if (!isValid) {
-            logger.debug("incorrect input line :" + input);
+            logger.debug("incorrect input string : " + line);
         }
         return isValid;
     }
 
-    static List<String> parseDigitsToNumbers(String input) {
-        List<String> numbersAndOperations = new ArrayList<>();
+    private static Deque<String> parseStringToNumbersAndOperations(String line) {
+        Deque<String> numbersAndOperations = new LinkedList<>();
 
-        for (int i = 0; i < input.length(); i++) {
-            char current = input.charAt(i);
-            if (Character.isDigit(current) && (i < input.length() - 1)) {
-                int beginIndex = i;
-                int countDigits = 1;
-                while (Character.isDigit(input.charAt(i + 1))) {
-                    i++;
-                    countDigits++;
-                }
-                numbersAndOperations.add(input.substring(beginIndex, beginIndex + countDigits));
-                continue;
+        for (char c : line.toCharArray()) {
+            if (numbersAndOperations.isEmpty()) {
+                numbersAndOperations.addLast(String.valueOf(c));
+            } else if (isOperationSign(c)) {
+                numbersAndOperations.addLast(String.valueOf(c));
+            } else if (isDigitSign(c)) {
+                boolean isPreviousDigit = isDigitSign(numbersAndOperations.peekLast().charAt(0));
+                if (isPreviousDigit) {
+                    numbersAndOperations.addLast(numbersAndOperations.pollLast() + c);
+                } else numbersAndOperations.addLast(String.valueOf(c));
             }
-            numbersAndOperations.add(String.valueOf(current));
         }
         return numbersAndOperations;
     }
+
+    private static boolean isOperationSign(char c) {
+        return operations.contains(c);
+    }
+
+    private static boolean isDigitSign(char c) {
+        return !operations.contains(c);
+    }
+
 }
